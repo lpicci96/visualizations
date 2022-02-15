@@ -1,0 +1,68 @@
+---
+title: '#TidyTuesday 2/15'
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
+
+```{r}
+data <- read.csv("tidy_tuesday_2-15.csv")
+
+```
+
+
+```{r}
+#data wrangling
+total_length_vector <- c(60, 75,100)
+data$total_length <- total_length_vector
+data %>% 
+  mutate(enrolled = -Percent.Enrolled/100) %>% 
+  mutate(total = -total_length) %>% 
+  mutate(enrolled_prop = enrolled*total_length)->
+  data
+```
+
+```{r}
+ggplot(data, aes(x = Year, label = Percent.Enrolled))+
+  geom_col(aes(y=total), width = 5, fill = '#1d2020')+
+  geom_col(aes(y=enrolled_prop), fill='#cb0b33', width=5)+
+  
+  #expand plot limits
+  xlim(1870.5, 1900.5)+
+  ylim(-106, 5)+
+  
+  geom_text(aes(label = paste0(Percent.Enrolled, "%"), y = enrolled_prop/2), size = 3.5, fontface='bold')+
+  geom_text(aes(label = Year), y=3, fontface='bold', size = 3)+
+  
+  #enrolled legend
+  geom_rect(xmax = 1875, ymax = -75, xmin = 1876.5, ymin = -80, fill='#cb0b33')+
+  annotate("text", x = 1875, y = -75, label='PROPORTION ', size = 1.5, hjust = 'right', vjust = 1, color = "#8c807c")+
+  annotate("text", x = 1875, y = -80, label='PROPORTION ', size = 1.5, hjust = 'right', vjust = 0, color = "#8c807c")+
+  annotate("text", x = 1876.5, y = -75, label=' OF CHILDREN ENROLLED', size = 1.5, hjust='left', vjust = 1, color = "#8c807c")+
+  annotate("text", x = 1876.5, y = -80, label=" D'ENFENTS ENREGISTRES", size = 1.5, hjust='left', vjust = 0, color = "#8c807c")+
+  
+  #not enrolled legend
+  geom_rect(xmax = 1875, ymax = -89, xmin = 1876.5, ymin = -94, fill = "#1d2020")+
+  annotate("text", x = 1875, y = -89, label='PROPORTION ', size = 1.5, hjust = 'right', vjust = 1, color = "#8c807c")+
+  annotate("text", x = 1875, y = -94, label='PROPORTION ', size = 1.5, hjust = 'right', vjust = 0, color = "#8c807c")+
+  annotate("text", x = 1876.5, y = -89, label=' OF CHILDREN NOT ENROLLED', size = 1.5, hjust='left', vjust = 1, color = "#8c807c")+
+  annotate("text", x = 1876.5, y = -94, label=" D'ENFENTS NON ENREGISTRES", size = 1.5, hjust='left', vjust = 0, color = "#8c807c")+
+  
+  #title and subtitle
+  labs(title = "\nPROPORTION OF TOTAL NEGRO CHILDREN OF SCHOOL AGE WHO ARE ENROLLED IN PUBLIC SCHOOLS.\n\nPROPORTION DES ENFENTS NEGRES EN AGE D'ECOLE ENREGISTES DANS LES ECOLES PUBLIQUES.",
+       subtitle = "\nDONE BY ATLANTA UNIVERSITY\n\n")+
+  
+  #theme
+  theme_void()+
+  theme(plot.title = element_text(size = 5.3, hjust = 0.15, face="bold"),
+        plot.subtitle = element_text(size = 4.7, hjust = 0.5, face='bold'),
+        plot.background = element_rect(fill = "#e3ddd5", color = "#e3ddd5"))->
+  plot
+ggsave("tidy_tuesday_2-15.jpg", plot = plot, heigh=5, width = 4, unit='in')
+```
+
+
+
