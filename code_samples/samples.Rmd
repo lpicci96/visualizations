@@ -1,0 +1,263 @@
+---
+title: "Sample Visualizations with R"
+author: "Luca Picci"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(readxl)
+library(gapminder)
+library(ggrepel)
+library(gganimate)
+```
+
+#### OECD Plot
+
+> * Created with tidyverse and ggplot
+  * Data retrieved in April 2020
+```{r, fig.height = 7, fig.width = 12, echo=FALSE}
+oecd_Trade <- read.csv("https://raw.githubusercontent.com/lpicci96/sample_scripts_and_data/main/visualizations/data/oecd.csv")
+oecd_Trade %>% 
+  mutate(total = EXP + IMP) %>% 
+  mutate(balance_category =
+           case_when(NTRADE >= 0 ~ "Positive",
+                     NTRADE < 0 ~ "Negative"))->
+  oecd_Trade
+options(scipen = 999)
+ggplot(oecd_Trade, aes(y = reorder(Country, total), color = balance_category))+
+  geom_segment(aes(x = IMP, xend = EXP, yend = Country), size = 5, alpha = 1)+
+  geom_segment(aes(x = 0, xend = IMP, yend = Country), size = 5, color = "grey70", alpha = 0.5)+
+  geom_point(aes(x = EXP), size = 4.5, alpha = 1)+
+  geom_point(aes(x = IMP), size = 4.5, alpha = 1)+
+  
+  geom_text(aes(label = Country), x = 0, hjust = 0, size = 3.5, fontface = "bold")+
+  geom_text(aes(label = Country), x = 215, hjust = 0, size = 3.5)+
+  
+  #table content
+  geom_text(aes(y = Country), label = "$", x = 247, size = 3.5)+
+  geom_text(aes(label = round(NTRADE/1000, digits = 2), y = Country), x = 258, hjust = 1, size = 3.5)+  #billions of USD
+  geom_segment(aes(x = 242, xend = 260, yend = Country), size = 7.5, alpha = 0.2)+
+  
+  #styling
+  labs(title = "      OECD Member Reliance on the Foreign Sector - 2019                         Trade Balance",
+       subtitle = "          Spread of Trade in Goods and Services as a % of GDP                                                                                   (USD Billions)",
+       x = "Exports and Imports (% of GDP)",
+       caption = "Designed by Luca Picci\n*excl. United States, Turkey, Australia, Israel, Japan, Korea, Mexico, New Zealand\nSource: OECD (2020), Trade in goods and services (indicator)",
+       y=NULL)+
+  scale_color_manual(values = c("firebrick2", "steelblue4"))+
+  scale_x_continuous(breaks = c(25, 50, 75, 100, 125, 150, 175, 200),
+                     labels=function(x) paste0(x,"%"))+
+  guides(color = FALSE)+
+  geom_vline(color = "navy", xintercept = 100, linetype = "dashed")+
+  
+  #manual legend creation
+  geom_rect(xmax = 197, ymax = 17, xmin = 115, ymin = 13, alpha = 0.1, fill = "aliceblue", color = "steelblue4")+
+  geom_point(x = 130, y = 15, size = 4.5, color = "steelblue4")+
+  geom_point(x = 130, y = 14, size = 4.5, color = "firebrick2")+
+  geom_text(x = 133, y = 15, label = "Trade Surplus", color = "steelblue4", hjust = 0, size = 3.5, fontface = "bold")+
+  geom_text(x = 133, y = 14, label = "Trade Deficit", color = "firebrick2", hjust = 0, size = 3.5, fontface = "bold")+
+  geom_point(x = 130, y = 16, size = 4.5, color = "grey30")+
+  geom_point(x = 120, y = 16, size = 4.5, color = "grey30")+
+  geom_segment(x = 120, xend = 130, y = 16, yend = 16, color = "grey30", size = 5)+
+  geom_text(label = "Spread of exports and imports ", y = 16, x = 133, hjust = 0, color = "grey30")+
+  
+  #annotation
+  geom_text(label = "Luxembourg's exports were 209% of GDP and\n
+            imports were 173% of GDP", 
+            x = 175, y = 23,
+            size = 3.5, lineheight = 0.5, color = "steelblue4")+
+  geom_curve(x = 190, xend = 175, y = 24, yend = 28, size = 0.5)+
+  
+  #theme
+  theme(
+    panel.background = element_rect(fill = "aliceblue"),
+    plot.background = element_rect(fill = "aliceblue"),
+    panel.grid = element_blank(),
+    panel.grid.major.x = element_line(color = "steelblue2", linetype = "dashed"),
+    
+    plot.title = element_text(size = 20, hjust = 0, color = "steelblue4", face = "bold"),
+    plot.subtitle = element_text(size = 14, color = "firebrick4", hjust = 0),
+    plot.caption = element_text(color = "firebrick4"),
+    
+    axis.line.x = element_line(color = "steelblue2", size = 0.5),
+    axis.text = element_text(size = 10, color = "steelblue4", face = "bold"),
+    axis.title = element_text(color = "steelblue4", face = "bold"),
+    axis.line.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y= element_blank(),
+    axis.ticks.x = element_blank())
+```
+
+#### Gapminder Plot
+
+> * Created with ggplot, ggrepel, tidyverse, and Gapminder
+  * Inspired by the Gapminder World Poster
+```{r,fig.width=13, fig.height = 8, echo=FALSE}
+plotData<-
+  gapminder_unfiltered %>% 
+  filter(year == 2007)
+meanLife<-
+  gapminder_unfiltered %>% 
+  summarise(mean_life = mean(lifeExp))
+meanLife<- as.numeric(meanLife)
+incomeLevelName<- c("Low Income", "Lower Middle Income", "Upper Middle Income", "High Income")
+incomeLevel <- c(0, 906, 3596, 11116)
+df<- data.frame(incomeLevelName, incomeLevel)
+options(scipen = 999)
+ggplot(data = plotData, aes(x = gdpPercap, y = lifeExp))+
+  
+  geom_jitter(alpha = 0.7, stroke = 1,
+             aes(color = continent, size = pop))+
+  ggrepel::geom_text_repel(data = plotData %>% filter(pop>=9000000|lifeExp<65|country == "Qatar"),
+                           aes(label=country, size = (pop/10)+1200000),
+                           na.rm = TRUE, color = "grey10",
+                           segment.alpha = 0.5, segment.colour = "grey45")+
+  
+  geom_vline(xintercept = 906, linetype="dashed", color = "steelblue4", size = 0.7)+
+  geom_vline(xintercept = 3595, linetype="dashed", color = "steelblue4", size = 0.7)+
+  geom_vline(xintercept = 11116, linetype="dashed", color = "steelblue4", size = 0.7)+
+  geom_hline(yintercept = meanLife, linetype = "dashed", color = "steelblue4", size = 0.7)+
+  
+  
+  scale_size(range = c(1.5,35))+
+  scale_x_log10(n.breaks = 6)+
+  scale_y_continuous(limits = c(35,90))+
+  scale_color_manual(values = c("darkgreen", "goldenrod3", "red3", "cyan4", "rosybrown2", "darkorchid4"))+
+  guides(size = FALSE)+
+  
+  
+  
+  labs(x = "GDP per capita (USD)", y = "Life Expectancy (years)", 
+       title = "2007 Global Health, Wealth, and Population",
+       subtitle = "Source: Gapminder",
+       caption = "Designed by: Luca Picci\nInspired by the Gapminder World Poster 2015\nwith World Bank country classification by income (2007 classification)")+
+  theme(
+    panel.background = element_rect(fill = "Grey99"),
+    plot.background = element_rect(fill = "Grey99"),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "steelblue4"),
+    legend.key = element_rect(fill = "Grey99"),    legend.background = element_rect(fill = "Grey99"),
+    legend.position = c(0.9,0.35),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 9, color = "grey30", face = "bold"),
+    plot.title = element_text(size = 20, color = "steelblue4", face = "bold"),
+    plot.subtitle = element_text(size = 14, color = "grey30", face = "bold"),
+    plot.caption = element_text(color="grey30"),
+    axis.title = element_text(size = 12, color = "steelblue4", face = "bold"),
+    axis.text = element_text(color = "grey30")
+  )+
+  annotate(geom = "text", label= "Mean Life Expectancy", x = 280, y = meanLife+1, hjust = "left", fontface=1, color = "steelblue4")+
+  annotate(geom = "text", label = "Low Income", x = 400, y=90, hjust = "left", color = "steelblue4", fontface=2)+
+  annotate(geom = "text", label = "Lower Middle Income", y = 90, x = 1900, color = "steelblue4", fontface=2)+
+  annotate(geom = "text", label = "Upper Middle Income", y = 90, x = 6000, color = "steelblue4", fontface=2)+
+  annotate(geom = "text", label = "High Income", y = 90, x = 30000, color = "steelblue4", fontface = 2)->
+  gapminderPlot
+gapminderPlot
+```
+
+#### European Youth Unemployment Plot
+> * Created with gganimate
+
+```{r,fig.height = 6, fig.width = 11, echo=FALSE}
+unemployment <- read_excel("C:/Users/lpicc/OneDrive/Documents/GIFTEI coursework/Y1_Q3 spring 2020/Data Visualization/data/unemployment.xlsx")
+unemployment <-read.csv("https://raw.githubusercontent.com/lpicci96/sample_scripts_and_data/main/visualizations/data/unemployment.csv")
+unemployment %>% 
+  filter(SUBJECT == "TOT") %>% 
+  filter(TIME>=2005) %>% 
+  filter(Country!= "Estonia")->
+  plotData
+unemploymentPlot <- ggplot(data = plotData)+
+                      aes(y = reorder(Country, Value))+
+                      aes(x = Value)+
+                      
+                      geom_segment(aes(x = 0, xend = 65, yend = Country),size = 8, color = "azure3", alpha = 0.4)+
+                      geom_col(fill = "steelblue4", width = 0.75, alpha = 0.9)+
+                      geom_text(x=64, label = "%", color = "steelblue4", fontface = "bold", hjust = 0)+
+                      geom_text(aes(label = format(round(Value, digits = 0))),x = 63, color = "steelblue4", fontface = "bold", hjust = 1)+
+                      geom_text(aes(label = reorder(Country, Value)), x = 0.1, hjust = 0, color = "grey99", fontface = "bold")+
+                      
+                      expand_limits(x = 65)+
+                      
+                      labs(title = "Euro Area Youth Unemployment Rate 2005 - 2017")+
+                      labs(subtitle = "Unemployed 15-24 year-olds expressed as a % of the youth labour force")+
+                      labs(y = NULL)+
+                      labs(caption = "Designed by: Luca Picci\n*excl. Malta, Cyprus, Estonia\nSource:OECD (2020), Youth unemployment rate (indicator)")+
+                       theme(
+                        panel.background = element_rect(fill = "grey99"),
+                        plot.background = element_rect(fill = "grey99"),
+                        panel.grid = element_blank(),
+                        
+                        plot.title = element_text(size = 18, hjust = 0.08, color = "steelblue4", face = "bold"),
+                        plot.subtitle = element_text(size = 12, color = "darkgoldenrod2", hjust = 0.1, face = "bold"),
+                        plot.caption = element_text(color = "steelblue4", hjust = 0.94),
+                        
+                        # axis.line.x = element_line(color = "steelblue2", size = 0.5),
+                        axis.text.x = element_text(size = 10, color = "steelblue4", hjust = 0.5),
+                        axis.line.y = element_blank(),
+                        axis.text.y = element_blank(),
+                        axis.ticks.y= element_blank(),
+                        axis.ticks.x = element_blank(),
+                        axis.title.x = element_text(size = 12, hjust = 0.07, color = "steelblue4", face = "bold"),
+                        axis.line.x = element_blank()
+                      )+
+                      scale_x_continuous(position = "top", breaks = c(0, 25, 50), labels=function(x) paste0(x,"%"))+
+                      annotate(x=0, xend=65, y=15, yend=15, colour="steelblue4", geom="segment", size = 2)+
+                      annotate(x = 25, xend = 25, y = 14.9, yend = 0.5, size = 1, geom="segment", color = "darkgoldenrod2", linetype = "dashed")+
+                      annotate(x = 50, xend = 50, y = 14.9, yend = 0.5, size = 1, geom="segment", color = "darkgoldenrod2", linetype = "dashed")+
+                        
+                      labs(x = 'Year: {format(round(frame_time, digits = 0))}')+
+                      gganimate::transition_time(TIME)+
+                      ease_aes('linear')
+animate(unemploymentPlot, res = 150, end_pause = 5, fps = 15, height = 6, width = 11, units = "in")
+```
+
+#### Mass Shootings in the US - Tableau Plot
+
+> * Created with Tableau
+  * Data from Stanford Databases
+![](mean fatalities.jpg)
+
+#### State Influence Plot
+
+> * created with ggplot and gganimate
+  * data on formal bilateral influence Capacity from the Pardee Center for International Futures (IFs)
+```{r, echo=FALSE}
+fbicData <- read.csv("https://raw.githubusercontent.com/lpicci96/sample_scripts_and_data/main/visualizations/data/influence_and_outfluence_with_regions.csv")
+p <- fbicData %>% 
+  mutate(balance =
+           case_when(total_influence_sent > total_influence_received ~ "Positive",
+                     total_influence_sent < total_influence_received ~ "Negative",
+                     total_influence_sent == total_influence_received ~ "Equal"))%>%
+  mutate(highValue = 
+           case_when(total_influence_sent>= total_influence_received ~ total_influence_sent,
+                     total_influence_sent < total_influence_received ~ total_influence_received)) %>% 
+  mutate(net = abs(total_influence_sent - total_influence_received)) %>% 
+  mutate(neg_rec = -total_influence_received)
+ggplot(p, aes(total_influence_sent, total_influence_received, color = balance, size = net))+
+  geom_jitter(alpha = 0.7, stroke = 0.1)+
+  labs(title = "Country Influence",
+       subtitle = 'Year: {format(round(frame_time, digits = 0))}',
+       x = "Influence Sent",
+       y = "Influence Received")+
+  scale_color_manual(values = c("grey", "#7c2c36", "#1e466c"))+
+  scale_size(range = c(0.5,5))+
+  theme(
+    plot.subtitle = element_text(color = "#7c2c36", face = "bold", size = 15),
+    plot.title = element_text(color = "#1e466c", face = "bold", size = 10),
+    strip.text = element_text(face = "bold", hjust = 0, size = 5.5))+
+  guides(color = guide_legend(title = "Net Influence"))+
+  guides(size = FALSE)+
+  facet_wrap(~region, nrow = 2)+
+  transition_time(as.numeric(year))+
+  ease_aes('linear')+
+  enter_fade()+
+  exit_fade()->
+  scplot
+animate(scplot, duration = 20, end_pause = 10, height = 4, width = 8, units = "in", res = 300, fps = 20)
+```
