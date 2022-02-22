@@ -1,5 +1,9 @@
 # #TidyTuesday
 
+### Feb 22 - [Freedom in the world](https://github.com/rfordatascience/tidytuesday/blob/master/data/2022/2022-02-22/readme.md)
+<img src = "https://user-images.githubusercontent.com/56567716/155238384-3b34a55d-43c3-415c-b4f2-319eb0409b98.jpg" width = 750>
+
+
 
 ### Feb 15 - [Du Bois Visualization Challenge: 2022](https://nightingaledvs.com/the-dubois-challenge/)
 
