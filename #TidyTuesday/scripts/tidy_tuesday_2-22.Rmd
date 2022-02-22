@@ -1,0 +1,99 @@
+---
+title: "tidy2"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+#read data
+freedom <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-02-22/freedom.csv')
+
+#get 2010 values
+freedom %>% 
+  filter(Region_Name == 'Africa') %>% 
+  filter(year == 2010) %>% 
+  select(country, CL) %>% 
+  rename(CL_2010=CL)->
+  CL_2010
+  
+#clean and manipulate data
+freedom %>% 
+  filter(Region_Name == 'Africa') %>% 
+  filter(year == 2020) %>% 
+  left_join(CL_2010, by='country') %>% 
+  mutate(diff = CL-CL_2010) %>% 
+  mutate(balance=
+           case_when(diff>0 ~'negative',
+                     diff<0 ~'positive',
+                     diff == 0 ~'equal')) %>% 
+  #select(country, CL, CL_2010, diff, balance) %>% 
+  filter(balance == 'negative'| balance=='positive')->
+  data
+data$country[data$country == "CÃƒÂ´te dÃ¢â‚¬â„¢Ivoire"]<-"Cote d'Ivoire"
+```
+
+```{r}
+#plot
+ggplot(data, aes(y = reorder(country, diff), x = diff, color=balance))+
+  geom_segment(aes(yend = country), xend = -4, x=3, color = 'grey70', alpha = 0.3, size=5)+
+  geom_segment(aes(yend = country), xend=0, size=5)+
+  geom_point(size=4.5)+
+  geom_vline(xintercept = 0, size=2, color='grey35')+
+  expand_limits(x=c(-4,3.75), y = 20.5)+
+  scale_x_continuous(breaks = c(-2, -1, 1, 2))+
+  
+  #add countries in chart
+  geom_text(aes(label=country), x = -4, hjust=0, size=3.5, color="grey3")+
+  geom_segment(aes(yend=country), x = -4, xend=-2.5, size=5, alpha = 0.2)+
+  
+  #change colors
+  scale_color_manual(values=c("orange3", "steelblue4"))+
+  
+  guides(color="none", y="none")+
+  labs(y=NULL, x="Change in Civil Liberty Rating (lower = More Freedom)",
+       title = " Civil Freedom in Africa",
+       subtitle = "   Changes in Civil Liberty from 2010 to 2020",
+       
+       caption = " Source: United Nations and Freedom House.\n This chart shows the countries with the largest changes in civil liberty rating between 2010 and 2020.\n Excludes countries where there has been no change.")+
+  
+  #theme
+  theme_minimal()+
+  theme(plot.background = element_rect(fill = "Aliceblue", color="Aliceblue"),
+        panel.grid = element_blank(),
+        plot.title = element_text(size = 24, hjust = 0, color = "steelblue4", face = "bold"),
+        plot.subtitle = element_text(size = 12, face = "bold", color = "Orange3", hjust = 0),
+        plot.caption = element_text(size = 10, color = "grey3", hjust=0),
+        axis.line.x = element_line(color = "grey3", size = 0.5),
+        panel.grid.major.x = element_line(linetype = "dashed", color = "grey3"),
+        axis.title.x = element_text(size = 12, color = "grey3")
+)+
+  
+  #legend
+  geom_rect(xmax = 2.75, xmin = 1.3, ymin = 3.8, ymax = 6.2, fill = "aliceblue", color ="steelblue4")+
+  #more freedom
+  geom_segment(y=4.5, yend=4.5, x=1.5, xend=2, size=5, alpha=0.5, color='steelblue4')+
+  geom_point(y=4.5, x = 1.5, size = 4.5, color = "steelblue4")+
+  geom_text(label = "More Free", y = 4.5, x = 2.1, hjust = 0, color = "steelblue4", size = 3.5)+
+  #less freedom
+  geom_segment(y=5.5, yend=5.5, x=1.5, xend=2, size=5, alpha=0.5, color='orange3')+
+  geom_point(y=5.5, x = 2, size = 4.5, color = "orange3")+
+  geom_text(label = "Less Free", y = 5.5, x = 2.1, hjust = 0, color = "orange3", size = 3.5)+
+  
+  #2020 values
+  geom_text(aes(label = CL),x = 3.3, hjust=0, size=3.5, color="grey3") +
+  geom_segment(aes(yend=country), x = 3, xend=3.7, size=5, alpha = 0.2)+
+  geom_text(label = "2020 rating", y = 20, x = 3, hjust = 0, color = "orange3")->
+  plot
+ggsave("tidytuesday.jpg", plot = plot, height=6.5, width = 10, unit='in')
+```
+
+
+
+
+
+
+
