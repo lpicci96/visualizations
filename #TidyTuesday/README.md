@@ -1,5 +1,13 @@
 # #TidyTuesday
 
+### March 1 - Alternative Fuel Stations
+
+Here I look at the number of alternative fuel stations for each fuel type in each city for states in the West USA. This is inspired by [jeromefroe's](https://github.com/jeromefroe/circlepackeR) package circlepackeR. 
+See the interative plot [here](https://lpicci96.github.io/visualizations/tidy_tuesday_3-1.html)
+
+<img src = "https://user-images.githubusercontent.com/56567716/156280926-018e1170-bb95-4c40-9f5c-116db4570def.png" width = 500>
+
+
 ### Feb 22 - [Freedom in the world](https://github.com/rfordatascience/tidytuesday/blob/master/data/2022/2022-02-22/readme.md)
 <img src = "https://user-images.githubusercontent.com/56567716/155238384-3b34a55d-43c3-415c-b4f2-319eb0409b98.jpg" width = 750>
 
