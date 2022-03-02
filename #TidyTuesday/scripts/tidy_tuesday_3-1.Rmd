@@ -1,0 +1,52 @@
+---
+title: "#TidyTuesday 3-1-22"
+author: "Luca Picci"
+date: "3/1/2022"
+output: html_document
+---
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r}
+stations <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-01/stations.csv')
+
+```
+
+```{r}
+library(tidyverse)
+library(circlepackeR)
+library(data.tree)
+library(htmlwidgets)
+```
+
+
+```{r}
+stations %>% 
+  filter(STATE %in% c("CA", "AK", "AZ", "HI", "ID", "MT", "NV", "NM", "OR", "UT", "CO", "WY", "WA")) %>% 
+  select(STATE, FUEL_TYPE_CODE, CITY) %>% 
+  group_by(STATE, FUEL_TYPE_CODE, CITY) %>% 
+  summarise(weight = n()) %>% 
+  ungroup()->clean_data
+
+clean_data$pathString <- paste('Stations',clean_data$STATE,clean_data$FUEL_TYPE_CODE,clean_data$ CITY, sep="/")
+data_node <- as.Node(clean_data)
+```
+
+```{r}
+circlepackeR(data_node, size="weight", color_min = "hsl(56,80%,80%)", 
+             color_max = "hsl(341,30%,40%)",
+             width=600,
+             height=600)->
+  p
+
+```
+
+
+
+
+```{r}
+saveWidget(p, file="stations.html")
+```
+
