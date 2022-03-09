@@ -1,5 +1,10 @@
 # #TidyTuesday
 
+### March 8 - the ERASMUS Program
+
+<img src = https://user-images.githubusercontent.com/56567716/157558127-0f21afa6-e9cb-44ba-bfdd-97b37183f1b6.jpg width = 750>
+
+
 ### March 1 - Alternative Fuel Stations
 
 Here I look at the number of alternative fuel stations for each fuel type in each city for states in the West USA. This is inspired by [jeromefroe's](https://github.com/jeromefroe/circlepackeR) package circlepackeR. 
