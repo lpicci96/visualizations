@@ -1,0 +1,144 @@
+---
+title: "erasmus"
+author: "Luca Picci"
+date: "3/8/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(countrycode)
+```
+
+```{r}
+erasmus <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-08/erasmus.csv')
+```
+
+```{r}
+##Data Cleaning
+
+#2019-2020
+erasmus %>% 
+  filter(academic_year == "2019-2020") %>% 
+  select(sending_country_code, academic_year) %>% 
+  group_by(sending_country_code, academic_year) %>% 
+  rename(country = sending_country_code) %>% 
+  summarise(sending=n()) %>% 
+  ungroup()->
+  sending_2020
+erasmus %>% 
+  filter(academic_year == "2019-2020") %>% 
+  select(receiving_country_code, academic_year) %>% 
+  group_by(receiving_country_code, academic_year) %>% 
+  rename(country = receiving_country_code) %>% 
+  summarise(receiving=n()) %>% 
+  ungroup()->
+  receiving_2020
+inner_join(sending_2020, receiving_2020) %>% 
+  mutate(total_2020=sending+receiving) %>% 
+  select(country, total_2020)->
+  data_2020
+
+#2014-2015
+erasmus %>% 
+  filter(academic_year == "2014-2015") %>% 
+  select(sending_country_code, academic_year) %>% 
+  group_by(sending_country_code, academic_year) %>% 
+  rename(country = sending_country_code) %>% 
+  summarise(sending=n()) %>% 
+  ungroup()->
+  sending_2014
+erasmus %>% 
+  filter(academic_year == "2014-2015") %>% 
+  select(receiving_country_code, academic_year) %>% 
+  group_by(receiving_country_code, academic_year) %>% 
+  rename(country = receiving_country_code) %>% 
+  summarise(receiving=n()) %>% 
+  ungroup()->
+  receiving_2014
+inner_join(sending_2014, receiving_2014) %>% 
+  mutate(total_2014=sending+receiving) %>% 
+  select(country, total_2014)->
+  data_2014
+
+#merging
+data_final<-inner_join(data_2014, data_2020, by='country') %>% 
+  drop_na()
+data_final %>% 
+  mutate(countryName = countrycode(data_final$country, origin='iso2c', destination = 'country.name')) %>% 
+  mutate(countryName = replace(countryName, country=='EL', 'Greece')) %>% 
+  mutate(countryName = replace(countryName, country=='UK', 'United Kingdom'))->
+  data_final
+
+```
+
+```{r}
+#Creating the viz
+
+data_final %>% 
+  mutate(diff = total_2020-total_2014) %>% 
+  mutate(balance_category =
+           case_when(diff >= 0 ~ "Positive",
+                     diff < 0 ~ "Negative")) %>% 
+  mutate(sum_total = total_2014+total_2020) %>% 
+  ggplot(aes(y = reorder(countryName, sum_total), color=balance_category))+
+  geom_segment(aes(x = -800, xend = total_2020, yend = countryName), size = 5, color = "grey70", alpha = 0.5)+
+  geom_segment(aes(x = total_2020, xend = total_2014, yend = countryName), size = 5, alpha =0.6)+
+  
+  geom_point(aes(x = total_2020), size = 4.5, alpha = 1)+
+  geom_point(aes(x = total_2014), size = 4.5, alpha = 1)+
+  
+  xlim(-800, 7000)+
+  geom_text(aes(label = countryName), x = -800, hjust = 0, size = 3.5, fontface = "bold")+
+  
+  scale_color_manual(values = c("firebrick2", "steelblue4"))+
+  guides(color = FALSE)+
+  labs(title = "Participation in The ERASMUS program has soared",
+       subtitle = "In 2020, most European countries sent and received vastly more ERASMUS participants compared to 2014",
+       x = "Number of students sent and received",
+       caption = "Designed by Luca Picci\nSource: Data.Europe\nThis chart shows the difference in number of Erasmus students sent and received by each country from the 2014-2015 to 2019-2020 academic years",
+       y=NULL)+
+  
+  #manual legend creation
+  geom_rect(xmax = 5800, ymax = 8, xmin = 3600, ymin = 4, alpha = 0.1, fill = "aliceblue", color = "steelblue4")+
+  geom_point(x = 4130, y = 7, size = 4.5, color = "steelblue4")+
+  geom_point(x = 4130, y = 6, size = 4.5, color = "firebrick2")+
+  geom_text(x = 4200, y = 7, label = "Increase", color = "steelblue4", hjust = 0, size = 3.5, fontface = "bold")+
+  geom_text(x = 4200, y = 6, label = "Decreaset", color = "firebrick2", hjust = 0, size = 3.5, fontface = "bold")+
+  geom_point(x = 3930, y = 5, size = 4.5, color = "grey30")+
+  geom_point(x = 4120, y = 5, size = 4.5, color = "grey30")+
+  geom_segment(x = 4120, xend = 3930, y = 5, yend = 5, color = "grey30", size = 5)+
+  geom_text(label = "Change from 2014 to 2020 ", y = 5, x = 4200, hjust = 0, color = "grey30")+
+  
+  #theme
+  theme(
+    panel.background = element_rect(fill = "aliceblue"),
+    plot.background = element_rect(fill = "aliceblue"),
+    panel.grid = element_blank(),
+    panel.grid.major.x = element_line(color = "steelblue2", linetype = "dashed"),
+    
+    plot.title = element_text(size = 20, hjust = 0, color = "steelblue4", face = "bold"),
+    plot.subtitle = element_text(size = 14, color = "firebrick4", hjust = 0),
+    plot.caption = element_text(color = "firebrick4", hjust=0),
+    
+    axis.line.x = element_line(color = "steelblue2", size = 0.5),
+    axis.text = element_text(size = 10, color = "steelblue4", face = "bold"),
+    axis.title = element_text(color = "steelblue4", face = "bold"),
+    axis.line.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y= element_blank(),
+    axis.ticks.x = element_blank())->
+  plot
+
+```
+
+```{r}
+#export
+ggsave("tidy_tuesday_3-8.jpg", plot = plot, heigh=8, width = 12, unit='in')
+```
+
