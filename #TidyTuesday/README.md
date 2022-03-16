@@ -3,7 +3,7 @@
 
 ### March 15 - R Vignettes
 
-<img src=https://user-images.githubusercontent.com/56567716/158511550-9c2d5098-06fc-4bbc-aeeb-491d8f101ba9.jpg width = 750>
+<img src=https://user-images.githubusercontent.com/56567716/158512121-e33c86af-fbd1-4395-8d5a-9f2854ba7de2.jpg width = 750>
 
 
 ### March 8 - the ERASMUS Program
