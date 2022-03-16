@@ -1,0 +1,72 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(zoo)
+```
+
+```{r}
+bioc <- read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-15/bioc.csv')
+```
+
+```{r}
+bioc$date<-as.Date(bioc$date)
+bioc %>% 
+  mutate(year = year(date)) %>% 
+  filter(year>=2010) %>% 
+  select(date, rmd, rnw, package) %>% 
+  group_by(date) %>% 
+  summarise(rmd = sum(rmd),rnw=sum(rnw), package = n()) %>% 
+  ungroup() %>% 
+  mutate(moving_pck = rollmean(package, k=50, fill=NA),
+         moving_rmd = rollmean(rmd, k=50, fill=NA),
+         moving_rnw = rollmean(rnw, k=50, fill=NA)) %>% 
+  ggplot(aes(x = date, y=moving_pck))+
+  
+  geom_ribbon(aes(ymin=moving_pck -(moving_rmd/2), ymax=moving_pck +(moving_rmd/2)), color='steelblue4', alpha=0.5, fill='steelblue4', linetype='blank')+
+  geom_ribbon(aes(ymin=moving_pck -(moving_rnw/2), ymax=moving_pck +(moving_rnw/2)), color='firebrick2', alpha=0.5, fill='firebrick2', linetype='blank')+
+  geom_line(color='grey20')+
+  theme_light()+
+  
+  
+  theme(
+    panel.background = element_rect(fill = "grey98"),
+    plot.background = element_rect(fill = "grey98"),
+    panel.grid = element_blank(),
+    panel.border = element_blank(),
+    panel.grid.major.x = element_line(color = "steelblue4", size=0.001, linetype = "dashed"),
+    
+    plot.title = element_text(size = 20, hjust = 0, color = "steelblue4", face = "bold"),
+    plot.subtitle = element_text(size = 14, color = "firebrick4", hjust = 0),
+    plot.caption = element_text(color = "firebrick4", hjust=0),
+    
+    axis.line.x = element_line(color = "steelblue4", size = 0.5),
+    axis.text = element_text(size = 8, color = "steelblue4"),
+    axis.title.y = element_text(color = "steelblue4"),
+    axis.title.x = element_blank(),
+    axis.line.y = element_line(color = "steelblue4", size = 0.5),
+    axis.ticks.x = element_blank())+
+  scale_x_date(breaks=scales::pretty_breaks(n=10))+
+  scale_y_continuous(breaks = scales::pretty_breaks(n=9))+
+  labs(y = "Number of releases",
+       title = "Markdown Vignettes have taken over",
+       subtitle = "Sweave had a good run",
+       caption = "Source: Robert Flight\nThis chart shows the number of packages released, and the accompanying markdown and \nsweave vignettes since 2010, using a 50 day moving average.")+
+  
+  geom_rect(xmax = as.Date("2014-05-01"), ymax = 550, xmin = as.Date("2011-01-01"), ymin = 400, alpha = 0.1, fill = "grey98", color = "steelblue4")+
+  geom_rect(xmax = as.Date("2011-07-01"), ymax = 520, xmin = as.Date("2011-04-01"), ymin = 495, color="steelblue4", alpha=0.3, fill = "steelblue4")+
+  geom_text(x = as.Date("2011-11-01"), y=510, label="Markdown vignettes", size=3, hjust=0, vjust=0.5, color="steelblue4")+
+  
+  geom_rect(xmax = as.Date("2011-07-01"), ymax = 485, xmin = as.Date("2011-04-01"), ymin = 460, color="#b96d76", fill="#b96d76")+
+  geom_text(x = as.Date("2011-11-01"), y=475, label="Sweave vignettes", size=3, hjust=0, vjust=0.5, color="#b96d76")+
+  
+  geom_segment(x = as.Date("2011-04-01"), xend = as.Date("2011-08-01"), y = 440, yend=440, color="grey20")+
+  geom_text(x = as.Date("2011-11-01"), y = 440, label = "packages", size=3, hjust=0, vjust=0.5, color = "grey20")->
+  plot
+
+```
+
+```{r}
+#export
+ggsave("tidy_tuesday_3-15.jpg", plot = plot, height=5, width = 8, unit='in')
+```
