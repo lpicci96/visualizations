@@ -1,0 +1,184 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+baby_names<-read.csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-22/babynames.csv')
+```
+
+```{r}
+baby_names %>% 
+  filter(sex == "M") %>% 
+  select(year, name)->
+  m_names
+baby_names %>% 
+  filter(sex == "F") %>% 
+  select(year, name)->
+  f_names
+
+inner_join(m_names, f_names, by=c("year", "name")) %>% 
+  group_by(year) %>% 
+  summarise(count_neutral = n_distinct(name)) %>% 
+  ungroup()->
+  neutral
+
+baby_names %>% 
+  select(year, name) %>% 
+  group_by(year) %>% 
+  summarize(all_names = n_distinct(name)) %>% 
+  ungroup()->
+  all_names
+```
+
+```{r}
+inner_join(all_names, neutral, by="year") %>% 
+  filter(year>=1900) %>% 
+  ggplot(aes(x=year))+
+  
+  #generations
+  geom_text(label="The Greatest Generation", x = 1913, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="1910-1924", x = 1913, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  geom_segment(x = 1925,xend = 1925, yend = 0, y=37000,linetype = "dashed", size=0.3)+
+  geom_text(label="The Silent Generation", x = 1935, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="1925 - 1945", x = 1935, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  geom_segment(x = 1946,xend = 1946, yend = 0, y=37000,linetype = "dashed", size=0.3)+
+  geom_text(label="Baby Boomer Generation", x = 1955, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="1946 - 1964", x = 1955, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  geom_segment(x = 1965,xend = 1965, yend = 0, y=37000,linetype = "dashed", size=0.3)+
+  geom_text(label="Generation X", x = 1973, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="1965 - 1980", x = 1973, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  geom_segment(x = 1981,xend = 1981, yend = 0, y=37000,linetype = "dashed", size=0.3)+
+  geom_text(label="Millenial Generation", x = 1989, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="1981 - 1996", x = 1989, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  geom_segment(x = 1997,xend = 1997, yend = 0, y=37000,linetype = "dashed", size=0.3)+
+  geom_text(label="Generation Z", x = 2005, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="1997 - 2012", x = 2005, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  geom_segment(x = 2013,xend = 2013, yend = 0, y=37000,linetype = "dashed", size=0.3)+
+  geom_text(label="Generation Alpha", x = 2020, y=37000, hjust=0.5, size=3, vjust=0, fontface="bold")+
+  geom_text(label="Post 2012", x = 2020, y=36000, hjust=0.5, size=3, vjust=0, color="firebrick4")+
+  
+  #WW I
+  geom_segment(x = 1914,xend = 1914, yend = 12400, y=6500, size=0.3)+
+  geom_segment(x = 1914,xend = 1912, yend = 12400, y=12400, size=0.3)+
+  geom_text(label = "The Great War
+1914-1918", x = 1911,y=12500, hjust=1, size=3)+
+  
+  #womens suffrage
+  geom_segment(x = 1920,xend = 1920, yend = 16500, y=6500, size=0.3)+
+  geom_segment(x = 1920,xend = 1919, yend = 16500, y=16500, size=0.3)+
+  geom_text(label = "19th Amendment", x = 1918,y=16500, hjust=1, size=3)+
+  
+  #great depression
+  geom_segment(x = 1929,xend = 1929, yend = 11000, y=0, size=0.3)+
+  geom_segment(x = 1929,xend = 1929.5, yend = 11000, y=11000, size=0.3)+
+  geom_text(label = "Great 
+Depression", x = 1930,y=11000, hjust=0, size=3)+
+  
+  #WW II
+  geom_segment(x = 1941,xend = 1941, yend = 16500, y=8000,size=0.3 )+#linetype = "dashed")+
+  geom_segment(x = 1941, xend = 1939, y=16500, yend=16500, size=0.3)+
+  #geom_curve(x = 1940.5,xend = 1930.5, yend = 12500, y=7000, curvature=-0.5)+
+  geom_text(label = "US enters WWII
+            1941-1945", x = 1938,y=16500, hjust=1, size=3)+
+  
+  #Korea
+  geom_segment(x = 1950,xend = 1950, yend = 16500, y=9000, size=0.3)+
+  geom_segment(x = 1950, xend = 1951, y=16500, yend=16500, size=0.3)+
+  geom_text(label = "Korean War
+  1950-1953", x = 1952,y=16500, hjust=0, size=3)+
+  
+  #vietnam
+  geom_segment(x = 1960,xend = 1960, yend = 12000, y=9000, size=0.3)+
+  geom_segment(x = 1960, xend = 1959.6, y=12000, yend=12000, size=0.3)+
+  geom_text(label = "Vietnam War
+  1960-1975", x = 1959,y=12000, hjust=1, size=3)+
+  
+  #civil rights
+  geom_segment(x = 1964,xend = 1964, yend = 22000, y=9000, size=0.3)+
+  geom_segment(x = 1964, xend = 1965.5, y=22000, yend=22000, size=0.3)+
+  geom_text(label = "Civil Rights Act", x = 1966,y=22000, hjust=0, size=3)+
+  
+  #stonewall riots
+  geom_segment(x = 1969,xend = 1969, yend = 19000, y=9000, size=0.3)+
+  geom_segment(x = 1969, xend = 1969.5, y=19000, yend=19000, size=0.3)+
+  geom_text(label = "Stonewall Riots", x = 1970,y=19000, hjust=0, size=3)+
+  
+  #Berlin wall
+  geom_segment(x = 1989,xend = 1989, yend = 28000, y=9000, size=0.3)+
+  geom_segment(x = 1989, xend = 1988.5, y=28000, yend=28000, size=0.3)+
+  geom_text(label = "Fall of the
+Berlin wall", x = 1988,y=28000, hjust=1, size=3)+
+  
+  #911
+  geom_segment(x = 2001,xend = 2001, yend = 32000, y=9000, size=0.3)+
+  geom_segment(x = 2001, xend = 2000.5, y=32000, yend=32000, size=0.3)+
+  geom_text(label = "911 Attack", x = 2000,y=32000, hjust=1, size=3)+
+  
+  #Great Recession
+  geom_segment(x = 2008,xend = 2008, yend = 34000, y=9000, size=0.3)+
+  geom_segment(x = 2007.5, xend = 2008, y=34000, yend=34000, size=0.3)+
+  geom_text(label = "Great 
+Recession", x = 2007,y=34000, hjust=1, size=3)+
+  
+  #Trump
+  geom_segment(x = 2016,xend = 2016, yend = 32000, y=9000, size=0.3)+
+  geom_segment(x = 2016.5, xend = 2016, y=32000, yend=32000, size=0.3)+
+  geom_text(label = "Trump 
+elected", x = 2017,y=32000, hjust=0, size=3)+
+  
+  #plot data
+  geom_col(aes(y=all_names), fill = "grey75")+
+  geom_col(aes(y=count_neutral), fill="royalblue1")+ 
+  scale_x_continuous(expand=expansion(mult = c(0, .1)),breaks=scales::pretty_breaks(n=10))+
+  scale_y_continuous(expand=c(0,0),limits = c(0,40000),breaks = c(0,5000, 10000,15000,20000,25000,30000,35000))+
+  
+ #legend
+  geom_rect(xmin = 1903, xmax = 1935, ymin = 26000, ymax =33000, fill="white", color = "grey")+
+  geom_rect(xmin = 1905, xmax = 1907, ymin = 31000, ymax=30000, fill = "grey75")+
+  geom_text(label="number of baby names used", x = 1909, y=30500, hjust=0, size=3)+
+  geom_rect(xmin = 1905, xmax = 1907, ymin = 28000, ymax=29000, fill = "royalblue1")+
+  geom_text(label="names given to both boys and girls", x = 1909, y=28500, hjust=0, size=3)+
+  
+  #labels+titles
+  labs(title = "Parents are giving babies more and more unique names",
+       subtitle = "The number of different names given to babies has skyrocketed compared to a century ago. There are 
+also many more names being given to both boys and girls. Does this mean that names are becoming less gender specific or are there simply more names to choose from?
+
+How unique is your name?",
+caption = "Source: babynames R package from Hadley Wickham.
+Designed by Luca Picci. Inspired from the visualizations by Emily Kothe.
+This chart shows the number of unique baby names per year, and the proportion of names assigned to both males and females.")+
+  
+  #theme
+  theme_minimal()+
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(color="grey"),
+    axis.ticks = element_line(color="grey"),
+    axis.title = element_blank(),
+    plot.title = element_text(face="bold", color="royalblue4", size=20),
+    plot.subtitle = element_text(color = "grey16"),
+    plot.caption = element_text(hjust=0, color = "firebrick4")
+    
+  )->
+  plot
+plot
+```
+```{r}
+ggsave("tidy_tuesday_3-22.jpg", plot = plot, height=7, width = 12, unit='in')
+```
+
