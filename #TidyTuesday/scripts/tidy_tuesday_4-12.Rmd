@@ -1,0 +1,107 @@
+---
+title: "Tidy Tuesday 4-12"
+author: "Luca Picci"
+date: "4/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(WDI)
+library(countrycode)
+```
+```{r}
+#read data from world bank
+access <- WDI(indicator = "EG.CFT.ACCS.ZS", latest=1)
+gdppc <- WDI(indicator = "NY.GDP.PCAP.CD", start = 2019, end=2019)
+pop <- WDI(indicator = "SP.POP.TOTL", start = 2019, end=2019)
+          
+```
+
+```{r}
+#read death data from Tidytuesday + Our World in Data
+read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-04-12/indoor_pollution.csv") %>% 
+  filter(Year == 2019) %>% 
+  rename(country = Entity, year = Year, deaths = Deaths...Cause..All.causes...Risk..Household.air.pollution.from.solid.fuels...Sex..Both...Age..Age.standardized..Percent.) %>% 
+  select(country, year, deaths)->
+  deaths
+deaths$continent <-countrycode(deaths$country, origin = "country.name", destination = "continent")
+```
+
+```{r}
+#merge data
+deaths %>% 
+  left_join(access, by =c("country", "year")) %>% 
+  left_join(gdppc, by = c("country", "year")) %>% 
+  left_join(pop, by = c("country", "year")) %>% 
+  select(deaths, EG.CFT.ACCS.ZS, "country", "NY.GDP.PCAP.CD", "year", "continent", SP.POP.TOTL) %>% 
+  rename(access = EG.CFT.ACCS.ZS, "gdppc" = "NY.GDP.PCAP.CD", pop = SP.POP.TOTL) %>% 
+  drop_na()->
+  data
+  
+```
+
+
+```{r}
+
+options(scipen = 999)
+data %>% 
+  mutate(pop = pop/1000000) %>% #millions
+  ggplot(aes(y = continent, x = access, size = pop, color = continent))+
+  geom_rect(xmin= -1, xmax = 49, ymin= 0, ymax = 6, fill = "grey70", color = "grey70", alpha = 0.01, size = 0)+
+  annotate("text", label = "Less than 50% access to clean fuels and technology \nfor cooking", x = 0,y=5.9, hjust=0, color = "royalblue4", size = 3, vjust = 1)+
+  geom_jitter(alpha = 0.7)+
+  scale_size(range = c(1.5,12), breaks = c(0, 10, 100, 1000))+
+  scale_color_manual(values = c("darkgreen", "goldenrod3", "red3", "cyan4", "darkorchid4"))+
+  annotate("segment", x = 66.178, xend = 66.178, y = 0, yend = 6, linetype = 'dashed', color = "royalblue4", size = 0.5)+
+  annotate("text", label = "world average\n(66%)", x = 67, y = 5.9, size = 3, color = "royalblue4", vjust = 1, hjust = 0)+
+  theme_light()+
+  theme(
+
+    panel.grid = element_blank(),
+    panel.grid.major.y = element_line(color = "grey75"),
+    panel.border = element_blank(),
+    axis.line.x = element_line(color = "grey75"),
+    axis.title= element_text(color = "grey40", size = 8, face = "bold" ),
+    axis.text.x = element_text(color = "grey40"),
+    axis.text.y =element_text(color = "royalblue4", size = 8, face = "bold", vjust = 0),
+    axis.title.y = element_blank(),
+    plot.caption = element_text(hjust = 0, color = "royalblue4", size = 8),
+    
+    
+    legend.position = c(0.91, 0.25),
+    legend.background  = element_rect(color = "grey40"),
+    legend.title = element_text(size = 8, hjust = 0.5, color = "royalblue4", face = "bold"),
+    legend.text = element_text(size = 8, color = "grey30"),
+    plot.title = element_text(face="bold", color="royalblue4", size=14, hjust = 0),
+    plot.subtitle = element_text(color = "grey30", size = 10, hjust = 0, face = "bold")
+    )+
+  
+  labs(x = "access to clean fuels and technology for cooking (% of population)",
+       caption = "Source: World Bank.\nThis chart shows access to clean fuels and technologies for cooking as a percent of population, for 2019.\nPoints are sized by population.",
+       title = "Cooking Inequality",
+       
+      
+       subtitle = "In many countries, less than half the population has access to clean fuels and technology for cooking.\nThere is a long way to go to ensure universal access to clean and reliable fuel and technology (SDG 7.1.2).\n")+
+  
+  guides(color = FALSE, size = guide_legend(override.aes = list(alpha = 0.2), title = "population \n(millions)"))+
+  
+  geom_curve(x = 100, xend = 103, y = 5.5, yend = 5.8, size = 0.5, curvature = -0.5, color = "grey70")+
+  annotate("text", label = "Full access to clean fuels \nand technology for cooking", x = 105, y = 5.9, size = 3, color = "royalblue4", vjust = 1, hjust = 0 )+
+  
+  
+  
+  
+  scale_x_continuous(expand=expansion(mult = c(.05, .3)),breaks= c(0, 25, 50, 75, 100))-> plot
+```
+
+```{r}
+ggsave("tidy_tuesday_4-12.png", plot = plot, height=6, width = 10, unit='in')
+```
+
+
