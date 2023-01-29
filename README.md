@@ -1,6 +1,11 @@
 # My Visualizations
 
-Welcome to my data visualizations page! Below you can find various samples of my work using R, Python, Tableau, Flouirsh and others, and access the code [here](https://github.com/lpicci96/visualizations/tree/main/code_samples). You can also check out my #TidyTuesday contributions [here](https://github.com/lpicci96/visualizations/tree/main/%23TidyTuesday). 
+Welcome to my data visualizations page! Below you can find some samples of my work using R, Python, Tableau, Flouirsh and others, and access the code [here](https://github.com/lpicci96/visualizations/tree/main/code_samples). 
+
+
+Check out some of my #TidyTuesday contributions [here!](https://github.com/lpicci96/visualizations/tree/main/%23TidyTuesday). 
+
+I have created several charts and analysis on international development, public health, climate and other topics as part of my work at ONE Campaing. [Check them out here!](https://data.one.org/)
 
 ## Sample Viz
 
